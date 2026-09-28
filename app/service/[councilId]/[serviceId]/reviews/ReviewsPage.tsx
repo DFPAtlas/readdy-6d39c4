@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import ReviewModal from '../../../../components/ReviewModal';
-import StarRating from '../../../../components/lv/StarRating';
+import ReviewModal from '../../../../../components/ReviewModal';
+import StarRating from '../../../../../components/lv/StarRating';
 
 interface ReviewsPageProps {
   councilId: string;
