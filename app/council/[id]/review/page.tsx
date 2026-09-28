@@ -3,9 +3,9 @@
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
-import Header from '../../../components/lv/Header';
-import Footer from '../../../components/lv/Footer';
-import StarRating from '../../../components/lv/StarRating';
+import Header from '../../../../components/lv/Header';
+import Footer from '../../../../components/lv/Footer';
+import StarRating from '../../../../components/lv/StarRating';
 
 const serviceCategories = ['Adult Social Care','Education & Schools','Housing','Planning','Waste & Recycling','Parking','Highways & Roads','Council Tax'];
 
