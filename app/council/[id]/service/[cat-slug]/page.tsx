@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import Header from '../../../../components/lv/Header';
-import Footer from '../../../../components/lv/Footer';
+import Header from '../../../../../components/lv/Header';
+import Footer from '../../../../../components/lv/Footer';
 
 const labels: Record<string, { name: string; category: string; description: string }> = {
   waste: { name: 'Waste & Recycling', category: 'Environment', description: 'Rubbish collection, recycling, garden waste and street-cleaning services.' },
