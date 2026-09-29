@@ -2,13 +2,12 @@
 
 import { useState, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { supabase } from '../../lib/supabase';
 import Header from '../../components/lv/Header';
 import Footer from '../../components/lv/Footer';
 
 function SignupForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get('next') || '/';
 
