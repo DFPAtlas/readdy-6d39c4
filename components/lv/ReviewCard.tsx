@@ -18,7 +18,7 @@ interface Review {
 export default function ReviewCard({ review }: { review: Review }) {
   const badgeText = review.is_resident
     ? `Verified resident in ${review.district || 'this area'}`
-    : 'Verified reviewer';
+    : 'Resident status unverified';
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-5 hover:shadow-md transition-shadow">
@@ -29,8 +29,8 @@ export default function ReviewCard({ review }: { review: Review }) {
           </div>
           <div>
             <p className="text-sm font-semibold text-slate-900">{review.display_name}</p>
-            <p className="text-xs text-emerald-700 flex items-center gap-1">
-              <i className="ri-check-double-line text-xs" />
+            <p className={`text-xs flex items-center gap-1 ${review.is_resident ? 'text-emerald-700' : 'text-slate-400'}`}>
+              <i className={`${review.is_resident ? 'ri-check-double-line' : 'ri-information-line'} text-xs`} />
               {badgeText}
             </p>
           </div>
