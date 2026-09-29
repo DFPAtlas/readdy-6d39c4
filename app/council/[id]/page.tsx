@@ -8,6 +8,12 @@ export async function generateStaticParams() {
     { id: 'surrey' },
     { id: 'birmingham' },
     { id: 'essex' },
+    { id: 'bristol' },
+    { id: 'cambridgeshire' },
+    { id: 'camden' },
+    { id: 'hampshire' },
+    { id: 'leeds' },
+    { id: 'oxfordshire' },
   ];
 }
 
