@@ -16,13 +16,13 @@ const pacifico = Pacifico({
 });
 
 export const metadata: Metadata = {
-  title: "LocalVerdict — UK Council Ratings",
+  title: "Rate Your Local Council — UK Council Ratings",
   description:
-    "How's your council really doing? Read and write verified reviews for every local authority in the UK.",
+    "Find a council, read published resident experiences and share feedback on council services.",
   openGraph: {
-    title: "LocalVerdict — UK Council Ratings",
+    title: "Rate Your Local Council — UK Council Ratings",
     description:
-      "How's your council really doing? Read and write verified reviews for every local authority in the UK.",
+      "Find a council, read published resident experiences and share feedback on council services.",
     type: "website",
   },
 };

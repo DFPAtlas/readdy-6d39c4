@@ -1,3 +1,4 @@
+import Icon from '../lv/Icon';
 import Link from 'next/link';
 
 type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
@@ -51,7 +52,7 @@ export default function Button(props: ButtonProps) {
       {loading ? (
         <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
       ) : icon ? (
-        <i className={`${icon} text-current`} />
+        <Icon className={`${icon} text-current`} />
       ) : null}
       {children}
     </>

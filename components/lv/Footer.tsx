@@ -1,5 +1,7 @@
 'use client';
 
+import Icon from './Icon';
+
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 
@@ -7,14 +9,12 @@ export default function Footer() {
   const [showCookieBanner, setShowCookieBanner] = useState(false);
 
   useEffect(() => {
-    const consent = localStorage.getItem('lv_cookie_consent');
-    if (!consent) {
-      setShowCookieBanner(true);
-    }
+    try { setShowCookieBanner(!localStorage.getItem('lv_cookie_consent')); }
+    catch { setShowCookieBanner(true); }
   }, []);
 
   const acceptCookies = () => {
-    localStorage.setItem('lv_cookie_consent', 'essential');
+    try { localStorage.setItem('lv_cookie_consent', 'essential'); } catch { /* Browser storage can be disabled. */ }
     setShowCookieBanner(false);
   };
 
@@ -48,12 +48,12 @@ export default function Footer() {
             <div className="col-span-2 md:col-span-1">
               <Link href="/" className="flex items-center gap-2 mb-4 cursor-pointer">
                 <div className="w-7 h-7 bg-[#0B5FFF] rounded-md flex items-center justify-center">
-                  <i className="ri-government-line text-white text-sm" />
+                  <Icon className="ri-government-line text-white text-sm" />
                 </div>
-                <span className="font-['Pacifico'] text-lg text-white">LocalVerdict</span>
+                <span className="font-bold text-sm text-white">Rate Your Local Council</span>
               </Link>
               <p className="text-sm text-slate-400 leading-relaxed">
-                Verified resident reviews for every UK local authority. Making councils accountable through transparency.
+                Independent resident feedback on council services. Coverage is growing.
               </p>
             </div>
 
@@ -131,31 +131,14 @@ export default function Footer() {
                     hello@localverdict.co.uk
                   </a>
                 </li>
-                <li className="flex items-center gap-3 pt-2">
-                  <a
-                    href="https://twitter.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-8 h-8 bg-slate-800 rounded-full flex items-center justify-center hover:bg-[#0B5FFF] transition-colors cursor-pointer"
-                  >
-                    <i className="ri-twitter-x-line text-sm" />
-                  </a>
-                  <a
-                    href="https://linkedin.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-8 h-8 bg-slate-800 rounded-full flex items-center justify-center hover:bg-[#0B5FFF] transition-colors cursor-pointer"
-                  >
-                    <i className="ri-linkedin-fill text-sm" />
-                  </a>
-                </li>
+
               </ul>
             </div>
           </div>
 
           <div className="mt-10 pt-6 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
             <p className="text-xs text-slate-500">
-              &copy; {new Date().getFullYear()} LocalVerdict. All rights reserved.
+              &copy; {new Date().getFullYear()} Rate Your Local Council. All rights reserved.
             </p>
             <p className="text-xs text-slate-500">
               Not an official government website. Independent resident review platform.
@@ -169,7 +152,7 @@ export default function Footer() {
         <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200 shadow-lg">
           <div className="px-4 py-4 lg:px-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <p className="text-sm text-slate-700">
-              We use only essential cookies to keep you signed in and prevent abuse.{' '}
+              We use browser storage to keep you signed in, save review drafts and remember this notice.{' '}
               <Link href="/legal/cookies" className="text-[#0B5FFF] hover:underline cursor-pointer">
                 Learn more
               </Link>

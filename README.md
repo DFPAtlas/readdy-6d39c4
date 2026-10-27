@@ -1,30 +1,46 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Rate Your Local Council
 
-## Getting Started
+Next.js App Router site exported as static HTML for Readdy hosting. Public pages read council records and approved resident reviews from Supabase; authentication and submissions use the browser client with database RLS.
 
-First, run the development server:
+## Local setup
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Use Node 20 or later. Run `npm ci`, copy `.env.example` to `.env.local` and provide the project's public URL and anon/publishable key. Never add a service-role key to a `NEXT_PUBLIC_` variable. Run `npm run dev`.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Validation
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- `npm test`: navigation, safe return paths, draft expiry and legacy service aliases.
+- `npm run lint`: ESLint.
+- `npm run typecheck`: TypeScript.
+- `npm run build`: production static export into `out/`.
+- `npx playwright install chromium` then `npm run test:browser`: 21 exported page states at 390/768/1366px, menu and rating keyboard controls, guide anchors and draft recovery/expiry. Run against an unconfigured build; external requests are blocked so this suite does not send email or touch production data.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+CI runs tests, lint and the production build with placeholder configuration. It does not prove production credentials, emails or moderation work.
 
-## Learn More
+## Static routes
 
-To learn more about Next.js, take a look at the following resources:
+Council data can change without rebuilding the exported route list. Navigation therefore uses:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `/council-view?council=<slug>`
+- `/council-service?council=<slug>&service=<slug>`
+- `/write-review?council=<slug>&service=<slug>`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The original path-based council/service/review URLs remain as compatibility entry points. `/council/hertfordshire` is an official-source resource guide; resident reviews use `/council-view?council=hertfordshire`.
+
+## Backend change
+
+`supabase/migrations/20261027084355_account_review_history.sql` adds author-only visibility of their own pending reviews, without changing public visibility. It was applied to the existing Rate your local Council project and verified with temporary, rolled-back fixtures: owner can read; other user and anonymous cannot. The second migration, `20261027102317_remoderate_author_review_edits.sql`, returns author-edited content to pending moderation and prevents direct vote-count and trust-field manipulation. Rolled-back role tests verified edited content is no longer public and authors cannot self-verify or inflate helpful counts. Both migrations were applied; security advisors returned no findings. These are incremental migrations for the existing database, not a complete schema bootstrap.
+
+## Deployment and remaining launch gates
+
+Merge/publish only after reviewing the PR. Readdy must retain `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`; auth confirmation/magic-link redirects must allow the published site, and password recovery must allow `/reset-password`.
+
+Still required before launch:
+
+1. Confirm the final domain and a monitored support mailbox. The existing `hello@localverdict.co.uk` address remains pending verification; account closure and reports currently use this manual channel.
+2. Connect and verify automatic postcode-to-authority matching. Until then the postcode page explicitly links to GOV.UK and does not claim to match a postcode.
+3. Verify public auth settings, mail delivery, confirmation and password recovery on the published domain.
+4. Confirm a staffed moderation workflow, residency-verification process and secure account-deletion/retention procedure. No automatic account deletion or direct review editing is claimed.
+5. Complete the privacy notice with verified controller address, legal bases, processors/transfers, retention schedule and complaint details. Current copy describes implemented storage/behaviour; it is not a complete legal approval.
+6. Test desktop/mobile layouts and full browser journeys with production configuration. A static build alone is insufficient.
+
+Official data feeds, local activity feeds and a full civic dashboard remain planned. The resource guide supplies source links rather than simulated live data or fabricated ratings.

@@ -1,3 +1,4 @@
+import Icon from '../lv/Icon';
 interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {
   label?: string;
   error?: string;
@@ -33,7 +34,7 @@ export default function Input({
       )}
       <div className="relative">
         {icon && (
-          <i className={`${icon} absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm`} />
+          <Icon className={`${icon} absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm`} />
         )}
         <input
           id={inputId}

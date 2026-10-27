@@ -1,7 +1,10 @@
 'use client';
 
+import Icon from './Icon';
+
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { supabase, isSupabaseConfigured } from '../../lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import PostcodeSearch from './PostcodeSearch';
 
@@ -9,6 +12,13 @@ export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const router = useRouter();
+  const [signedIn, setSignedIn] = useState(false);
+  useEffect(() => {
+    if (!isSupabaseConfigured) return;
+    supabase.auth.getSession().then(({data}) => setSignedIn(Boolean(data.session))).catch(() => {});
+    const {data} = supabase.auth.onAuthStateChange((_event, session) => setSignedIn(Boolean(session)));
+    return () => data.subscription.unsubscribe();
+  }, []);
 
   const navItems = [
     { href: '/councils', label: 'Councils' },
@@ -22,7 +32,7 @@ export default function Header() {
       <div className="flex items-center justify-between gap-4 px-4 py-3 lg:px-8">
         <Link href="/" className="flex items-center gap-3 shrink-0 cursor-pointer">
           <div className="w-9 h-9 bg-[#0B5FFF] rounded-xl flex items-center justify-center shadow-sm">
-            <i className="ri-government-line text-white text-xl" />
+            <Icon className="ri-government-line text-white text-xl" />
           </div>
           <div className="leading-tight">
             <div className="font-bold text-slate-900 text-sm lg:text-base">Rate Your Local Council</div>
@@ -44,18 +54,18 @@ export default function Header() {
 
         <div className="hidden lg:flex items-center gap-2">
           <button onClick={() => setSearchOpen(!searchOpen)} className="xl:hidden w-9 h-9 flex items-center justify-center rounded-lg text-slate-500 hover:text-[#0B5FFF] hover:bg-slate-50" aria-label="Search">
-            <i className="ri-search-line text-lg" />
+            <Icon className="ri-search-line text-lg" />
           </button>
-          <button onClick={() => router.push('/login')} className="w-9 h-9 flex items-center justify-center rounded-lg text-slate-500 hover:text-[#0B5FFF] hover:bg-slate-50" aria-label="Account">
-            <i className="ri-user-line text-lg" />
+          <button onClick={() => router.push(signedIn ? '/account' : '/login')} className="w-9 h-9 flex items-center justify-center rounded-lg text-slate-500 hover:text-[#0B5FFF] hover:bg-slate-50" aria-label="Account">
+            <Icon className="ri-user-line text-lg" />
           </button>
           <button onClick={() => router.push('/councils')} className="bg-[#0B5FFF] text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 whitespace-nowrap">
             Write a review
           </button>
         </div>
 
-        <button className="lg:hidden w-9 h-9 flex items-center justify-center rounded-lg text-slate-600 hover:bg-slate-50" onClick={() => setMobileOpen(!mobileOpen)} aria-label={mobileOpen ? 'Close menu' : 'Open menu'}>
-          <i className={`${mobileOpen ? 'ri-close-line' : 'ri-menu-line'} text-xl`} />
+        <button className="lg:hidden w-9 h-9 flex items-center justify-center rounded-lg text-slate-600 hover:bg-slate-50" onClick={() => setMobileOpen(!mobileOpen)} aria-expanded={mobileOpen} aria-label={mobileOpen ? 'Close menu' : 'Open menu'}>
+          <Icon className={`${mobileOpen ? 'ri-close-line' : 'ri-menu-line'} text-xl`} />
         </button>
       </div>
 
@@ -66,7 +76,7 @@ export default function Header() {
           <div className="mb-3"><PostcodeSearch variant="compact" /></div>
           {navItems.map((item) => <Link key={item.href} href={item.href} onClick={() => setMobileOpen(false)} className="block py-2.5 text-sm font-medium text-slate-700 hover:text-[#0B5FFF]">{item.label}</Link>)}
           <div className="pt-3 border-t border-slate-100 flex gap-3">
-            <button onClick={() => router.push('/login')} className="flex-1 py-2.5 border border-slate-300 rounded-lg text-sm font-medium text-slate-700">Sign in</button>
+            <button onClick={() => router.push(signedIn ? '/account' : '/login')} className="flex-1 py-2.5 border border-slate-300 rounded-lg text-sm font-medium text-slate-700">{signedIn ? 'Your account' : 'Sign in'}</button>
             <button onClick={() => router.push('/councils')} className="flex-1 py-2.5 bg-[#0B5FFF] text-white rounded-lg text-sm font-semibold">Write a review</button>
           </div>
         </div>

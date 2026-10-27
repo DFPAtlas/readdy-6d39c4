@@ -17,7 +17,7 @@ export default function CommunityGuidelinesPage() {
           <p><strong>No spam.</strong> Do not post the same review multiple times, use reviews for commercial promotion, or include irrelevant links.</p>
           <p><strong>Be factual.</strong> Avoid speculation about internal council decisions you are not privy to. Stick to what actually happened to you.</p>
           <p><strong>Respect privacy.</strong> Do not include personal information about yourself or others beyond what the review form requests.</p>
-          <p><strong>One review per experience.</strong> You may update your review if your experience changes, but do not submit multiple reviews for the same service in quick succession.</p>
+          <p><strong>One review per experience.</strong> To correct a review, delete it from your account and submit a replacement. Do not submit duplicate reviews for the same experience.</p>
         </div>
       </main>
       <Footer />

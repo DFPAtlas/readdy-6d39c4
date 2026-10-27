@@ -1,3 +1,4 @@
+import Icon from './Icon';
 import Link from 'next/link';
 
 interface EmptyStateProps {
@@ -18,7 +19,7 @@ export default function EmptyState({
   return (
     <div className="text-center py-16 px-4">
       <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-        <i className={`${icon} text-slate-400 text-2xl`} />
+        <Icon className={`${icon} text-slate-400 text-2xl`} />
       </div>
       <h3 className="text-lg font-semibold text-slate-800 mb-2">{title}</h3>
       {description && <p className="text-sm text-slate-500 mb-6">{description}</p>}

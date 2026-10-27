@@ -1,5 +1,7 @@
 'use client';
 
+import Icon from './Icon';
+
 import { useState } from 'react';
 
 interface StarRatingProps {
@@ -34,7 +36,7 @@ export default function StarRating({
   const displayRating = hoverRating || rating;
 
   return (
-    <div className={`flex items-center gap-0.5 ${sizeClasses[size]}`}>
+    <div role={interactive ? "radiogroup" : "img"} aria-label={interactive ? "Overall rating" : `${rating} out of ${maxRating} stars`} className={`flex items-center gap-0.5 ${sizeClasses[size]}`}>
       {Array.from({ length: maxRating }, (_, i) => {
         const star = i + 1;
         const filled = star <= displayRating;
@@ -42,6 +44,20 @@ export default function StarRating({
           <button
             key={star}
             type="button"
+            role={interactive ? "radio" : undefined}
+            aria-checked={interactive ? star === rating : undefined}
+            tabIndex={interactive && star === (rating || 1) ? 0 : -1}
+            aria-hidden={!interactive || undefined}
+            data-star={star}
+            onKeyDown={(event) => {
+              if (!interactive) return;
+              const values: Record<string, number> = { ArrowRight: Math.min(maxRating, star + 1), ArrowUp: Math.min(maxRating, star + 1), ArrowLeft: Math.max(1, star - 1), ArrowDown: Math.max(1, star - 1), Home: 1, End: maxRating };
+              const next = values[event.key];
+              if (!next) return;
+              event.preventDefault();
+              onChange?.(next);
+              event.currentTarget.parentElement?.querySelector<HTMLButtonElement>(`[data-star="${next}"]`)?.focus();
+            }}
             onClick={() => handleClick(star)}
             onMouseEnter={() => interactive && setHoverRating(star)}
             onMouseLeave={() => interactive && setHoverRating(0)}
@@ -50,7 +66,7 @@ export default function StarRating({
             }`}
             aria-label={`${star} star${star > 1 ? 's' : ''}`}
           >
-            <i
+            <Icon
               className={`${filled ? 'ri-star-fill' : 'ri-star-line'} ${
                 filled ? 'text-amber-500' : 'text-slate-300'
               }`}

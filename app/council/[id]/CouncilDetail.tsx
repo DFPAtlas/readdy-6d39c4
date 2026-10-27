@@ -1,6 +1,9 @@
 'use client';
 
+import Icon from '../../../components/lv/Icon';
+
 import Link from 'next/link';
+import { serviceHref } from '../../../lib/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import Header from '../../../components/lv/Header';
 import Footer from '../../../components/lv/Footer';
@@ -73,6 +76,7 @@ export default function CouncilDetail({ councilId }: CouncilDetailProps) {
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
+      setLiveError('Reviews are temporarily unavailable. Please try again later.');
       setLoading(false);
       return;
     }
@@ -93,7 +97,7 @@ export default function CouncilDetail({ councilId }: CouncilDetailProps) {
         return;
       }
 
-      const [{ data: reviewRows }, { data: serviceRows }] = await Promise.all([
+      const [{ data: reviewRows, error: reviewError }, { data: serviceRows, error: serviceError }] = await Promise.all([
         supabase
           .from('reviews')
           .select('id,display_name,is_resident,district,rating,title,body,service_name,created_at,helpful_count')
@@ -101,13 +105,14 @@ export default function CouncilDetail({ councilId }: CouncilDetailProps) {
           .eq('status', 'live')
           .eq('moderation_status', 'live')
           .order('created_at', { ascending: false })
-          .limit(100),
+          .limit(1000),
         supabase
           .from('service_review_summary')
           .select('service_name,review_count,average_rating')
           .eq('council_id', councilRow.id),
       ]);
 
+      if (reviewError || serviceError) setLiveError('Some review information could not be loaded. Please try again.');
       setCouncil(councilRow as LiveCouncil);
       setReviews((reviewRows || []) as LiveReview[]);
       setServiceSummaries((serviceRows || []).map((row: any) => ({
@@ -118,7 +123,7 @@ export default function CouncilDetail({ councilId }: CouncilDetailProps) {
       setLoading(false);
     };
 
-    load();
+    load().catch(() => { setLiveError('Council information could not be loaded. Please try again.'); setLoading(false); });
   }, [councilId]);
 
   const ratingCounts = useMemo(() => {
@@ -137,10 +142,11 @@ export default function CouncilDetail({ councilId }: CouncilDetailProps) {
     id: council?.id || councilId,
     slug: council?.slug || councilId,
     name: council?.name || councilId.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
-    council_type: council?.council_type || 'district',
-    region: council?.region || 'Live data pending',
+    council_type: council?.council_type || 'unknown',
+    region: council?.region || '',
     overall_rating: averageRating,
     review_count: reviews.length,
+    ratings_available: !loading && !liveError,
   };
 
   const services = serviceSummaries
@@ -173,11 +179,11 @@ export default function CouncilDetail({ councilId }: CouncilDetailProps) {
       <Header />
       <CouncilHero council={heroCouncil} />
 
-      <div className="bg-white border-b border-slate-200 sticky top-[57px] z-40">
+      <div className="bg-white border-b border-slate-200 sticky top-[61px] z-40">
         <div className="px-4 lg:px-8">
-          <div className="flex gap-1">
+          <div className="flex gap-1 overflow-x-auto">
             {(['overview', 'services', 'reviews', 'contact'] as const).map(tab => (
-              <button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors cursor-pointer whitespace-nowrap ${activeTab === tab ? 'border-[#0B5FFF] text-[#0B5FFF]' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>
+              <button key={tab} onClick={() => setActiveTab(tab)} className={`px-3 sm:px-4 py-3 text-sm font-medium border-b-2 transition-colors cursor-pointer whitespace-nowrap ${activeTab === tab ? 'border-[#0B5FFF] text-[#0B5FFF]' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
               </button>
             ))}
@@ -189,18 +195,18 @@ export default function CouncilDetail({ councilId }: CouncilDetailProps) {
         {loading && <div className="bg-white border border-slate-200 rounded-xl p-6 text-sm text-slate-500">Loading live council data…</div>}
         {liveError && <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800">{liveError}</div>}
 
-        {!loading && activeTab === 'overview' && (
+        {!loading && !liveError && activeTab === 'overview' && (
           <div className="space-y-6">
             <div className="bg-white rounded-xl border border-slate-200 p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold text-slate-900">Resident rating distribution</h2>
-                <span className="text-xs font-semibold px-2 py-1 rounded-full bg-emerald-50 text-emerald-700">{isSupabaseConfigured ? 'LIVE SUPABASE' : 'ENV NOT CONFIGURED'}</span>
+                <h2 className="text-lg font-bold text-slate-900">Resident rating distribution (latest 1,000 published reviews)</h2>
+                <span className="text-xs font-semibold px-2 py-1 rounded-full bg-emerald-50 text-emerald-700">{isSupabaseConfigured ? 'Published reviews' : 'Reviews unavailable'}</span>
               </div>
               <div className="space-y-2">
                 {[5,4,3,2,1].map(stars => {
                   const count = ratingCounts[stars - 1];
                   return <div key={stars} className="flex items-center gap-3">
-                    <div className="flex items-center gap-1 w-12 shrink-0"><span className="text-sm font-medium text-slate-600">{stars}</span><i className="ri-star-fill text-amber-400 text-xs" /></div>
+                    <div className="flex items-center gap-1 w-12 shrink-0"><span className="text-sm font-medium text-slate-600">{stars}</span><Icon className="ri-star-fill text-amber-400 text-xs" /></div>
                     <div className="flex-1 h-2.5 bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-[#0B5FFF] rounded-full" style={{ width: getBarWidth(count) }} /></div>
                     <span className="text-sm text-slate-500 w-10 text-right shrink-0">{count}</span>
                   </div>;
@@ -212,7 +218,7 @@ export default function CouncilDetail({ councilId }: CouncilDetailProps) {
               <div className="flex items-center justify-between mb-4"><h2 className="text-lg font-bold text-slate-900">Services</h2><button onClick={() => setActiveTab('services')} className="text-sm font-medium text-[#0B5FFF]">View all →</button></div>
               {services.length === 0 ? <p className="text-sm text-slate-500">No live service review data yet.</p> :
                 <div className="space-y-3">{[...services].sort((a,b)=>b.rating-a.rating).slice(0,4).map(s => (
-                  <Link key={s.id} href={`/council/${councilId}/service/${s.slug}`} className="flex items-center justify-between py-2 hover:bg-slate-50 rounded-lg px-2 -mx-2">
+                  <Link key={s.id} href={serviceHref(councilId, s.slug)} className="flex items-center justify-between py-2 hover:bg-slate-50 rounded-lg px-2 -mx-2">
                     <div><span className="text-sm font-medium text-slate-700">{s.name}</span><span className="text-xs text-slate-400 ml-3">{s.reviews} reviews</span></div>
                     <div className="flex items-center gap-2"><StarRating rating={Math.round(s.rating)} size="sm" /><span className="text-sm font-semibold">{s.rating.toFixed(1)}</span></div>
                   </Link>
@@ -226,14 +232,14 @@ export default function CouncilDetail({ councilId }: CouncilDetailProps) {
           </div>
         )}
 
-        {!loading && activeTab === 'services' && (
+        {!loading && !liveError && activeTab === 'services' && (
           <div className="space-y-4">
             <div className="flex items-center gap-2 flex-wrap">
               <button onClick={() => setServiceFilter('all')} className={`px-3 py-1.5 rounded-full text-xs font-medium ${serviceFilter === 'all' ? 'bg-[#0B5FFF] text-white' : 'bg-slate-100 text-slate-600'}`}>All</button>
               {categories.map(cat => <button key={cat} onClick={() => setServiceFilter(cat)} className={`px-3 py-1.5 rounded-full text-xs font-medium ${serviceFilter === cat ? 'bg-[#0B5FFF] text-white' : 'bg-slate-100 text-slate-600'}`}>{cat}</button>)}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {filteredServices.map(s => <Link key={s.id} href={`/council/${councilId}/service/${s.slug}`} className="bg-white rounded-xl border border-slate-200 p-5 hover:shadow-md">
+              {filteredServices.map(s => <Link key={s.id} href={serviceHref(councilId, s.slug)} className="bg-white rounded-xl border border-slate-200 p-5 hover:shadow-md">
                 <div className="flex items-start justify-between mb-3"><div><h3 className="font-semibold">{s.name}</h3><span className="text-xs text-slate-400">{s.reviews} reviews</span></div><span className="text-xs px-2 py-0.5 rounded-full bg-slate-100">{s.category}</span></div>
                 <div className="flex items-center gap-2"><StarRating rating={Math.round(s.rating)} size="sm" /><span className="font-bold">{s.rating.toFixed(1)}</span></div>
               </Link>)}
@@ -241,7 +247,7 @@ export default function CouncilDetail({ councilId }: CouncilDetailProps) {
           </div>
         )}
 
-        {!loading && activeTab === 'reviews' && (
+        {!loading && !liveError && activeTab === 'reviews' && (
           <div className="space-y-4">
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div className="flex bg-slate-100 rounded-lg p-0.5">{(['newest','highest','lowest'] as const).map(sort => <button key={sort} onClick={() => setReviewFilter(sort)} className={`px-3 py-1.5 rounded-md text-xs font-medium ${reviewFilter===sort?'bg-white shadow-sm':'text-slate-500'}`}>{sort}</button>)}</div>
@@ -251,10 +257,10 @@ export default function CouncilDetail({ councilId }: CouncilDetailProps) {
           </div>
         )}
 
-        {!loading && activeTab === 'contact' && (
+        {!loading && !liveError && activeTab === 'contact' && (
           <div className="bg-white rounded-xl border border-slate-200 p-6">
             <h2 className="text-lg font-bold text-slate-900 mb-3">Official council links</h2>
-            <p className="text-sm text-slate-500 mb-5">These links come from the council record in the live data table.</p>
+            <p className="text-sm text-slate-500 mb-5">Visit the authority’s own website for official services and contact details.</p>
             <div className="flex flex-wrap gap-3">
               {council?.website_url && <a href={council.website_url} target="_blank" rel="noopener noreferrer" className="px-4 py-2.5 rounded-lg bg-[#0B5FFF] text-white text-sm font-medium">Council website</a>}
               {council?.contact_url && <a href={council.contact_url} target="_blank" rel="noopener noreferrer" className="px-4 py-2.5 rounded-lg border border-slate-200 text-slate-700 text-sm font-medium">Contact page</a>}
