@@ -9,7 +9,7 @@ import Footer from '../../components/lv/Footer';
 const faqs = [
   {
     question: 'How do I find my council?',
-    answer: 'Use the postcode search to open guidance and the government council lookup, then choose your authority in the directory. Automatic postcode matching is being prepared.',
+    answer: 'Enter your postcode in the search box and we show the council, or councils, that serve it. In two-tier areas you will see both the county council and the district council, as they handle different services. If a postcode cannot be matched, we link to the government lookup instead.',
   },
   {
     question: 'Who can leave a review?',

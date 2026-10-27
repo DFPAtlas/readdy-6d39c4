@@ -39,10 +39,16 @@ Merge/publish only after reviewing the PR. Readdy must retain `NEXT_PUBLIC_SUPAB
 Still required before launch:
 
 1. Confirm the final domain and a monitored support mailbox. The existing `hello@localverdict.co.uk` address remains pending verification; account closure and reports currently use this manual channel.
-2. Connect and verify automatic postcode-to-authority matching. Until then the postcode page explicitly links to GOV.UK and does not claim to match a postcode.
+2. Postcode matching is live via the `postcode-lookup` edge function (see below). Before launch, confirm the privacy notice wording about postcodes.io with whoever approves the legal copy.
 3. Verify public auth settings, mail delivery, confirmation and password recovery on the published domain.
 4. Confirm a staffed moderation workflow, residency-verification process and secure account-deletion/retention procedure. No automatic account deletion or direct review editing is claimed.
 5. Complete the privacy notice with verified controller address, legal bases, processors/transfers, retention schedule and complaint details. Current copy describes implemented storage/behaviour; it is not a complete legal approval.
 6. Test desktop/mobile layouts and full browser journeys with production configuration. A static build alone is insufficient.
 
 Official data feeds, local activity feeds and a full civic dashboard remain planned. The resource guide supplies source links rather than simulated live data or fabricated ratings.
+
+## Postcode lookup
+
+`/search?postcode=…` calls the `postcode-lookup` Supabase edge function (`supabase/functions/postcode-lookup`). The function asks [postcodes.io](https://postcodes.io) (ONS postcode data) for the postcode's district and county GSS codes, then matches them to `councils.official_code`. Two-tier areas return the county and the district; everywhere else returns one council. Terminated postcodes resolve to the nearest live postcode. The browser never contacts postcodes.io, postcodes are not stored or logged, and each function instance limits a caller to 30 lookups a minute. If the function cannot match, the page falls back to the GOV.UK lookup.
+
+Deploy changes with `supabase functions deploy postcode-lookup` (JWT verification on; the site calls it with the public anon key). Shared logic lives in `logic.ts` and is unit-tested by `tests/postcode.test.ts`; `index.ts` is Deno-only and excluded from the site's TypeScript build.

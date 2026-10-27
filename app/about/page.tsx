@@ -68,7 +68,7 @@ export default function AboutPage() {
                 {
                   step: '01',
                   title: 'Find your council',
-                  desc: 'Use the government postcode lookup to identify your council, then find the authority in our directory.',
+                  desc: 'Enter your postcode and we show the council, or councils, responsible for your area.',
                 },
                 {
                   step: '02',
