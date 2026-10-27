@@ -10,12 +10,16 @@ import Header from '../../components/lv/Header';
 import Footer from '../../components/lv/Footer';
 import PostcodeSearch from '../../components/lv/PostcodeSearch';
 import { isSupabaseConfigured, supabase } from '../../lib/supabase/client';
+import { formatCouncilType } from '../../lib/councils';
+import CouncilLogo from '../../components/lv/CouncilLogo';
 
 type CouncilListItem = {
   slug: string;
   name: string;
   council_type: string;
   region: string | null;
+  logo_url?: string | null;
+  logo_type?: string | null;
   review_count?: number;
   average_rating?: number | null;
 };
@@ -33,16 +37,6 @@ const fallbackCouncils: CouncilListItem[] = [
   { slug: 'oxfordshire', name: 'Oxfordshire County Council', council_type: 'county', region: 'South East' },
 ];
 
-function formatCouncilType(type: string) {
-  return type
-    .replace('london_borough', 'London Borough')
-    .replace('metropolitan', 'Metropolitan Council')
-    .replace('county', 'County Council')
-    .replace('unitary', 'Unitary Authority')
-    .replace('district', 'District Council')
-    .replace(/_/g, ' ');
-}
-
 function CouncilsContent() {
   const selectedService = useSearchParams().get('service') || '';
   const [search, setSearch] = useState('');
@@ -58,7 +52,7 @@ function CouncilsContent() {
     const load = async () => {
       const { data: councilRows, error: councilError } = await supabase
         .from('councils')
-        .select('slug,name,council_type,region')
+        .select('slug,name,council_type,region,logo_url,logo_type')
         .order('name');
 
       const { data: summaryRows, error: summaryError } = await supabase
@@ -85,6 +79,8 @@ function CouncilsContent() {
             name: c.name,
             council_type: c.council_type,
             region: c.region,
+            logo_url: c.logo_url,
+            logo_type: c.logo_type,
             review_count: summary?.review_count ?? 0,
             average_rating: summary?.average_rating == null ? null : Number(summary.average_rating),
           };
@@ -132,7 +128,7 @@ function CouncilsContent() {
           const featured = c.slug === 'hertfordshire';
           return <Link key={c.slug} href={selectedService ? serviceHref(c.slug, selectedService) : councilHref(c.slug)} className={`group bg-white border rounded-2xl p-5 transition-all hover:-translate-y-0.5 hover:shadow-lg ${featured?'border-blue-300 ring-2 ring-blue-50':'border-slate-200 hover:border-blue-200'}`}>
             <div className="flex items-start justify-between gap-3">
-              <div><span className="text-xs text-slate-400">{c.region || 'Region not set'}</span><h2 className="font-bold text-slate-900 mt-1 group-hover:text-blue-700">{c.name}</h2></div>
+              <div className="flex items-start gap-3 min-w-0"><CouncilLogo name={c.name} logoUrl={c.logo_url} logoType={c.logo_type} size={40} decorative /><div className="min-w-0"><span className="text-xs text-slate-400">{c.region || 'Region not set'}</span><h2 className="font-bold text-slate-900 mt-1 group-hover:text-blue-700">{c.name}</h2></div></div>
               {featured && <span className="text-[10px] font-bold rounded-full bg-blue-50 text-blue-700 px-2 py-1">FEATURED</span>}
             </div>
             <div className="mt-5 flex items-center justify-between"><span className="text-xs font-medium text-slate-500">{formatCouncilType(c.council_type)}</span><span className="text-sm font-semibold text-blue-700">Explore →</span></div>

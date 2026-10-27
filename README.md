@@ -30,6 +30,8 @@ The original path-based council/service/review URLs remain as compatibility entr
 
 `supabase/migrations/20261027084355_account_review_history.sql` adds author-only visibility of their own pending reviews, without changing public visibility. It was applied to the existing Rate your local Council project and verified with temporary, rolled-back fixtures: owner can read; other user and anonymous cannot. The second migration, `20261027102317_remoderate_author_review_edits.sql`, returns author-edited content to pending moderation and prevents direct vote-count and trust-field manipulation. Rolled-back role tests verified edited content is no longer public and authors cannot self-verify or inflate helpful counts. Both migrations were applied; security advisors returned no findings. These are incremental migrations for the existing database, not a complete schema bootstrap.
 
+`20261027114500_council_logos_and_uk_coverage.sql` adds `nation`, `logo_url`, `logo_type` and `logo_source_url` to `councils` (emblems restricted to Wikimedia Commons file paths). `20261027114600_load_uk_councils.sql` upserts all 382 current UK principal councils from mySociety's local authority register and Wikidata (websites, logos and coats of arms), keeping existing council ids and names. Both were applied on 27 Oct 2026. Councils without a held emblem show an initials badge; 133 currently have a logo or coat of arms.
+
 ## Deployment and remaining launch gates
 
 Merge/publish only after reviewing the PR. Readdy must retain `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`; auth confirmation/magic-link redirects must allow the published site, and password recovery must allow `/reset-password`.
