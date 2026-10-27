@@ -7,7 +7,7 @@ import {
   normalisePostcode,
   type CouncilRow,
 } from "../supabase/functions/postcode-lookup/logic";
-import { parseLookup, roleLabel } from "../lib/postcode";
+import { parseLookup, roleLabel } from "../lib/postcode-format";
 
 const row = (slug: string, code: string): CouncilRow => ({
   slug,
