@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import StarRating from './StarRating';
 import { reviewHref } from '../../lib/navigation';
+import { formatCouncilType } from '../../lib/councils';
+import CouncilLogo from './CouncilLogo';
 
 interface CouncilHeroProps {
   council: {
@@ -14,6 +16,9 @@ interface CouncilHeroProps {
     overall_rating: number;
     review_count: number;
     ratings_available?: boolean;
+    logo_url?: string | null;
+    logo_type?: string | null;
+    logo_source_url?: string | null;
   };
 }
 
@@ -25,18 +30,10 @@ export default function CouncilHero({ council }: CouncilHeroProps) {
       case 'unitary': return 'bg-violet-50 text-violet-700';
       case 'metropolitan': return 'bg-orange-50 text-orange-700';
       case 'london_borough': return 'bg-rose-50 text-rose-700';
+      case 'scottish_council': return 'bg-indigo-50 text-indigo-700';
+      case 'welsh_council': return 'bg-red-50 text-red-700';
+      case 'ni_district': return 'bg-teal-50 text-teal-700';
       default: return 'bg-slate-100 text-slate-700';
-    }
-  };
-
-  const formatType = (type: string) => {
-    switch (type) {
-      case 'county': return 'County Council';
-      case 'district': return 'District Council';
-      case 'unitary': return 'Unitary Authority';
-      case 'metropolitan': return 'Metropolitan District';
-      case 'london_borough': return 'London Borough';
-      default: return 'Council';
     }
   };
 
@@ -44,10 +41,19 @@ export default function CouncilHero({ council }: CouncilHeroProps) {
     <div className="bg-white border-b border-slate-200">
       <div className="px-4 py-6 lg:px-8">
         <div className="flex flex-col sm:flex-row items-start sm:justify-between gap-4">
-          <div className="min-w-0">
+          <div className="min-w-0 flex items-start gap-4">
+            <div className="flex flex-col items-center gap-1">
+              <CouncilLogo name={council.name} logoUrl={council.logo_url} logoType={council.logo_type} size={64} />
+              {council.logo_url && council.logo_source_url && (
+                <a href={council.logo_source_url} target="_blank" rel="noopener noreferrer" aria-label={`Image source and licence on Wikimedia Commons for the ${council.name} ${council.logo_type === 'coat_of_arms' ? 'coat of arms' : 'logo'}`} className="text-[10px] text-slate-400 hover:text-slate-600 underline">
+                  Image credit
+                </a>
+              )}
+            </div>
+            <div className="min-w-0">
             <div className="flex items-center gap-2 mb-2 flex-wrap">
               <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${getTypeColour(council.council_type)}`}>
-                {formatType(council.council_type)}
+                {formatCouncilType(council.council_type)}
               </span>
               <span className="text-xs text-slate-500">{council.region}</span>
             </div>
@@ -62,6 +68,7 @@ export default function CouncilHero({ council }: CouncilHeroProps) {
               <span className="text-sm text-slate-500">
                 {council.ratings_available === false ? '' : `${council.review_count.toLocaleString()} reviews`}
               </span>
+            </div>
             </div>
           </div>
           <Link

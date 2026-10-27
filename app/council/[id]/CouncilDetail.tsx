@@ -24,6 +24,9 @@ type LiveCouncil = {
   region: string | null;
   website_url: string | null;
   contact_url: string | null;
+  logo_url: string | null;
+  logo_type: string | null;
+  logo_source_url: string | null;
 };
 
 type LiveReview = {
@@ -87,7 +90,7 @@ export default function CouncilDetail({ councilId }: CouncilDetailProps) {
 
       const { data: councilRow, error: councilError } = await supabase
         .from('councils')
-        .select('id,slug,name,council_type,region,website_url,contact_url')
+        .select('id,slug,name,council_type,region,website_url,contact_url,logo_url,logo_type,logo_source_url')
         .eq('slug', councilId)
         .maybeSingle();
 
@@ -147,6 +150,9 @@ export default function CouncilDetail({ councilId }: CouncilDetailProps) {
     overall_rating: averageRating,
     review_count: reviews.length,
     ratings_available: !loading && !liveError,
+    logo_url: council?.logo_url ?? null,
+    logo_type: council?.logo_type ?? null,
+    logo_source_url: council?.logo_source_url ?? null,
   };
 
   const services = serviceSummaries
