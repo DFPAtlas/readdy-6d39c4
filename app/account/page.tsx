@@ -1,275 +1,255 @@
-'use client';
-
-import { useState, useEffect, Suspense } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { supabase } from '../../lib/supabase';
-import Header from '../../components/lv/Header';
-import Footer from '../../components/lv/Footer';
-import StarRating from '../../components/lv/StarRating';
-
-interface Review {
+"use client";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import type { User } from "@supabase/supabase-js";
+import Header from "../../components/lv/Header";
+import Footer from "../../components/lv/Footer";
+import { supabase, isSupabaseConfigured } from "../../lib/supabase/client";
+import { councilHref, validPostcode } from "../../lib/navigation";
+type Review = {
   id: string;
-  council_name: string;
-  service_name: string;
+  council_id: string;
   rating: number;
   title: string;
   body: string;
-  status: 'pending_auto_check' | 'pending_manual_review' | 'live' | 'removed';
+  moderation_status: string;
+  status: string;
   created_at: string;
-}
-
-function AccountContent() {
+  councils: { slug: string; name: string } | null;
+};
+export default function AccountPage() {
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
-  const [displayName, setDisplayName] = useState('');
-  const [postcode, setPostcode] = useState('');
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
-
+  const [displayName, setDisplayName] = useState("");
+  const [postcode, setPostcode] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
   useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        router.push('/login?next=/account');
+    async function load() {
+      if (!isSupabaseConfigured)
+        throw new Error(
+          "Accounts are temporarily unavailable. Please try again later.",
+        );
+      const { data, error } = await supabase.auth.getUser();
+      if (error || !data.user) {
+        router.replace("/login?next=/account");
         return;
       }
-      setUser(session.user);
-      setDisplayName(session.user.user_metadata?.display_name || '');
-      setPostcode(session.user.user_metadata?.postcode || '');
-
-      // Load mock reviews
-      setReviews([
-        {
-          id: '1',
-          council_name: 'Westminster City Council',
-          service_name: 'Waste & Recycling',
-          rating: 5,
-          title: 'Brilliant new recycling scheme',
-          body: 'The new separate food waste collection has made composting so much easier.',
-          status: 'live',
-          created_at: '2026-04-28T10:30:00Z',
-        },
-        {
-          id: '2',
-          council_name: 'Westminster City Council',
-          service_name: 'Planning',
-          rating: 2,
-          title: 'Planning application took forever',
-          body: 'Submitted a loft conversion in January and only got approval in April.',
-          status: 'live',
-          created_at: '2026-04-25T14:20:00Z',
-        },
-        {
-          id: '3',
-          council_name: 'Camden Council',
-          service_name: 'Housing',
-          rating: 4,
-          title: 'Repair handled quickly',
-          body: 'Reported a leaky roof on Monday and it was fixed by Wednesday.',
-          status: 'pending_manual_review',
-          created_at: '2026-04-20T09:15:00Z',
-        },
-      ]);
-
-      setLoading(false);
-    };
-    checkAuth();
+      setUser(data.user);
+      setDisplayName(data.user.user_metadata?.display_name || "");
+      setPostcode(data.user.user_metadata?.postcode || "");
+      const result = await supabase
+        .from("reviews")
+        .select(
+          "id,council_id,rating,title,body,moderation_status,status,created_at,councils(slug,name)",
+        )
+        .eq("user_id", data.user.id)
+        .order("created_at", { ascending: false });
+      if (result.error)
+        throw new Error(
+          "Your review history could not be loaded. Please refresh to try again.",
+        );
+      setReviews((result.data || []) as unknown as Review[]);
+    }
+    load()
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
   }, [router]);
-
-  const handleUpdateProfile = async (e: React.FormEvent) => {
+  async function save(e: React.FormEvent) {
     e.preventDefault();
-    setSaving(true);
-    setError('');
-    setMessage('');
-
-    const { error: updateError } = await supabase.auth.updateUser({
-      data: { display_name: displayName, postcode },
-    });
-
-    setSaving(false);
-    if (updateError) {
-      setError(updateError.message);
-    } else {
-      setMessage('Profile updated.');
+    setError("");
+    setMessage("");
+    if (!validPostcode(postcode)) {
+      setError("Enter a valid UK postcode.");
+      return;
     }
-  };
-
-  const handleDeleteAccount = async () => {
-    if (!confirm('This will permanently delete your account and all reviews. Are you sure?')) return;
-    await supabase.auth.signOut();
-    router.push('/');
-  };
-
-  const statusBadge = (status: string) => {
-    switch (status) {
-      case 'live':
-        return <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">Live</span>;
-      case 'pending_auto_check':
-        return <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">Checking</span>;
-      case 'pending_manual_review':
-        return <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-orange-50 text-orange-700">In review</span>;
-      case 'removed':
-        return <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-red-50 text-red-700">Removed</span>;
-      default:
-        return null;
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        data: {
+          display_name: displayName.trim(),
+          postcode: postcode.trim().toUpperCase(),
+        },
+      });
+      if (error) throw error;
+      setMessage(
+        "Profile saved. Changing your postcode does not verify residency.",
+      );
+    } catch {
+      setError("Your profile could not be saved. Please try again.");
+    } finally {
+      setBusy(false);
     }
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-50">
-        <Header />
-        <main className="px-4 py-12 lg:px-8 max-w-3xl mx-auto">
-          <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-slate-200 rounded w-48" />
-            <div className="h-32 bg-slate-200 rounded" />
-            <div className="h-32 bg-slate-200 rounded" />
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
   }
-
+  async function removeReview(id: string) {
+    if (!user || !window.confirm("Permanently delete this review?")) return;
+    setBusy(true);
+    setError("");
+    setMessage("");
+    try {
+      const { data, error } = await supabase
+        .from("reviews")
+        .delete()
+        .eq("id", id)
+        .eq("user_id", user.id)
+        .select("id");
+      if (error || data?.length !== 1) throw new Error();
+      setReviews((v) => v.filter((r) => r.id !== id));
+      setMessage("Review deleted.");
+    } catch {
+      setError("The review could not be deleted. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function signOut() {
+    setBusy(true);
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      setError("Could not sign out. Please try again.");
+      setBusy(false);
+    } else router.replace("/");
+  }
   return (
-    <div className="min-h-screen bg-slate-50">
+    <>
       <Header />
-
-      <main className="px-4 py-8 lg:px-8 max-w-3xl mx-auto">
-        <h1 className="text-2xl font-bold text-slate-900 mb-6">Your account</h1>
-
-        {/* Profile */}
-        <div className="bg-white rounded-xl border border-slate-200 p-6 mb-6">
-          <h2 className="text-lg font-bold text-slate-900 mb-4">Profile</h2>
-
-          {message && (
-            <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-sm text-emerald-700">
-              {message}
-            </div>
-          )}
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
-              {error}
-            </div>
-          )}
-
-          <form onSubmit={handleUpdateProfile} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
-              <input
-                type="email"
-                value={user?.email || ''}
-                disabled
-                className="w-full px-3 py-2.5 text-sm rounded-lg border border-slate-200 bg-slate-50 text-slate-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Display name</label>
-              <input
-                type="text"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                minLength={2}
-                maxLength={40}
-                className="w-full px-3 py-2.5 text-sm rounded-lg border border-slate-200 focus:outline-none focus:border-[#0B5FFF] transition-colors"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Postcode</label>
-              <input
-                type="text"
-                value={postcode}
-                onChange={(e) => setPostcode(e.target.value)}
-                maxLength={10}
-                className="w-full px-3 py-2.5 text-sm rounded-lg border border-slate-200 focus:outline-none focus:border-[#0B5FFF] transition-colors"
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={saving}
-              className="px-5 py-2.5 bg-[#0B5FFF] text-white text-sm font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-60 transition-colors cursor-pointer whitespace-nowrap"
-            >
-              {saving ? 'Saving...' : 'Save changes'}
-            </button>
-          </form>
-        </div>
-
-        {/* Reviews */}
-        <div className="bg-white rounded-xl border border-slate-200 p-6 mb-6">
-          <h2 className="text-lg font-bold text-slate-900 mb-4">Your reviews</h2>
-          {reviews.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-sm text-slate-500 mb-4">You haven&apos;t submitted any reviews yet.</p>
-              <Link
-                href="/councils"
-                className="inline-block px-5 py-2.5 bg-[#0B5FFF] text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors cursor-pointer"
-              >
-                Write your first review
-              </Link>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {reviews.map((r) => (
-                <div key={r.id} className="border border-slate-100 rounded-lg p-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <p className="text-sm font-medium text-slate-800">{r.council_name}</p>
-                      <p className="text-xs text-slate-400">{r.service_name}</p>
-                    </div>
-                    {statusBadge(r.status)}
-                  </div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <StarRating rating={r.rating} size="sm" />
-                    <span className="text-sm font-semibold text-slate-900">{r.title}</span>
-                  </div>
-                  <p className="text-sm text-slate-500 line-clamp-2">{r.body}</p>
-                  <p className="text-xs text-slate-400 mt-2" suppressHydrationWarning={true}>
-                    {new Date(r.created_at).toLocaleDateString('en-GB')}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Danger zone */}
-        <div className="bg-white rounded-xl border border-red-200 p-6">
-          <h2 className="text-lg font-bold text-red-700 mb-4">Delete account</h2>
-          <p className="text-sm text-slate-500 mb-4">
-            This will permanently delete your account and all associated reviews. This action cannot be undone.
+      <main className="max-w-3xl mx-auto p-4 lg:p-8 space-y-6">
+        <h1 className="text-3xl font-bold">Your account</h1>
+        {loading && <p role="status">Loading your account…</p>}
+        {error && (
+          <p role="alert" className="bg-red-50 text-red-800 p-4 rounded-xl">
+            {error}
           </p>
-          <button
-            onClick={handleDeleteAccount}
-            className="px-5 py-2.5 border border-red-300 text-red-700 text-sm font-medium rounded-lg hover:bg-red-50 transition-colors cursor-pointer whitespace-nowrap"
+        )}
+        {message && (
+          <p
+            role="status"
+            className="bg-green-50 text-green-800 p-4 rounded-xl"
           >
-            Delete my account
-          </button>
-        </div>
+            {message}
+          </p>
+        )}
+        {user && (
+          <>
+            <section className="bg-white border rounded-2xl p-6">
+              <h2 className="text-xl font-bold mb-4">Profile</h2>
+              <form onSubmit={save} className="space-y-4">
+                <p className="text-sm">{user.email}</p>
+                <label className="block">
+                  Display name
+                  <input
+                    required
+                    minLength={2}
+                    maxLength={40}
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    className="block border rounded-xl p-3 mt-1 w-full"
+                  />
+                </label>
+                <label className="block">
+                  Postcode
+                  <input
+                    required
+                    maxLength={10}
+                    value={postcode}
+                    onChange={(e) => setPostcode(e.target.value)}
+                    className="block border rounded-xl p-3 mt-1 w-full"
+                  />
+                </label>
+                <p className="text-sm text-slate-600">
+                  Your full postcode is not shown on public reviews.
+                </p>
+                <button
+                  disabled={busy}
+                  className="bg-blue-600 text-white px-5 py-3 rounded-xl disabled:opacity-50"
+                >
+                  Save profile
+                </button>
+              </form>
+            </section>
+            <section className="bg-white border rounded-2xl p-6">
+              <h2 className="text-xl font-bold">Your reviews</h2>
+              <p className="text-sm text-slate-600 mt-2">
+                Pending reviews are visible here before publication. To correct
+                a review, delete it and submit a replacement for moderation.
+              </p>
+              {!loading && !error && !reviews.length && (
+                <p className="mt-5">
+                  You have no reviews yet.{" "}
+                  <Link href="/councils" className="text-blue-700 underline">
+                    Choose a council
+                  </Link>
+                  .
+                </p>
+              )}
+              <div className="space-y-4 mt-5">
+                {reviews.map((r) => (
+                  <article key={r.id} className="border rounded-xl p-4">
+                    <div className="flex justify-between gap-3">
+                      <Link
+                        href={councilHref(r.councils?.slug || "")}
+                        className="text-blue-700 underline"
+                      >
+                        {r.councils?.name || "Council review"}
+                      </Link>
+                      <span className="text-sm">
+                        {r.moderation_status === "live" && r.status === "live"
+                          ? "Published"
+                          : r.moderation_status === "pending"
+                            ? "Awaiting moderation"
+                            : "Not published"}
+                      </span>
+                    </div>
+                    <h3 className="font-semibold mt-3">
+                      {r.rating}/5 · {r.title}
+                    </h3>
+                    <p className="mt-2 whitespace-pre-wrap break-words">
+                      {r.body}
+                    </p>
+                    <p className="text-xs text-slate-500 mt-3">
+                      {new Date(r.created_at).toLocaleDateString("en-GB")}
+                    </p>
+                    <button
+                      disabled={busy}
+                      onClick={() => removeReview(r.id)}
+                      className="text-red-700 underline mt-4 disabled:opacity-50"
+                    >
+                      Delete review
+                    </button>
+                  </article>
+                ))}
+              </div>
+            </section>
+            <section className="bg-white border rounded-2xl p-6">
+              <h2 className="text-xl font-bold">Account and privacy</h2>
+              <p className="text-sm text-slate-600 mt-3">
+                To request account deletion or a copy of your data, contact
+                support from the email registered to your account. This link
+                opens your email app; your account remains active until the
+                request has been processed.
+              </p>
+              <Link
+                href="/contact"
+                className="inline-block text-blue-700 underline mt-4"
+              >
+                Request account deletion or data access
+              </Link>
+              <button
+                onClick={signOut}
+                disabled={busy}
+                className="block mt-5 border rounded-xl px-5 py-3 disabled:opacity-50"
+              >
+                Sign out
+              </button>
+            </section>
+          </>
+        )}
       </main>
-
       <Footer />
-    </div>
-  );
-}
-
-export default function AccountPage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-slate-50">
-        <Header />
-        <main className="px-4 py-12 lg:px-8 max-w-3xl mx-auto animate-pulse">
-          <div className="h-8 bg-slate-200 rounded w-48 mb-6" />
-          <div className="h-32 bg-slate-200 rounded mb-4" />
-          <div className="h-32 bg-slate-200 rounded" />
-        </main>
-        <Footer />
-      </div>
-    }>
-      <AccountContent />
-    </Suspense>
+    </>
   );
 }

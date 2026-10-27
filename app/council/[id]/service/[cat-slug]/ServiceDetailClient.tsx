@@ -1,45 +1,172 @@
-'use client';
+"use client";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import Header from "../../../../../components/lv/Header";
+import Footer from "../../../../../components/lv/Footer";
+import ReviewCard from "../../../../../components/lv/ReviewCard";
+import {
+  isSupabaseConfigured,
+  supabase,
+} from "../../../../../lib/supabase/client";
+import { councilHref, reviewHref } from "../../../../../lib/navigation";
+import { canonicalService } from "../../../../../lib/services";
 
-import Link from 'next/link';
-import Header from '../../../../../components/lv/Header';
-import Footer from '../../../../../components/lv/Footer';
-
-const labels: Record<string, { name: string; category: string; description: string }> = {
-  waste: { name: 'Waste & Recycling', category: 'Environment', description: 'Rubbish collection, recycling, garden waste and street-cleaning services.' },
-  parking: { name: 'Parking', category: 'Transport', description: 'Parking permits, resident schemes, enforcement and appeals.' },
-  planning: { name: 'Planning', category: 'Housing & development', description: 'Planning applications, building control, permitted development and enforcement.' },
-  housing: { name: 'Housing', category: 'Housing', description: 'Housing services, support and local housing responsibilities.' },
-  highways: { name: 'Highways & Roads', category: 'Transport', description: 'Road maintenance, highways, traffic and related services.' },
-  education: { name: 'Education & Schools', category: 'Education', description: 'Schools, admissions and education services.' },
+type Review = Parameters<typeof ReviewCard>[0]["review"];
+type Service = {
+  id: string;
+  name: string;
+  description: string | null;
+  category: string;
 };
-
-export default function ServiceDetailClient({ councilId, slug }: { councilId: string; slug: string }) {
-  const service = labels[slug] || {
-    name: slug.replaceAll('-', ' ').replace(/\b\w/g, c => c.toUpperCase()),
-    category: 'Council service',
-    description: 'Service information, public data and resident experience.'
-  };
-
-  return <div className="min-h-screen bg-slate-50">
-    <Header />
-    <main className="px-4 lg:px-8 py-8 max-w-5xl mx-auto">
-      <nav className="text-sm text-slate-500 mb-6 flex gap-2">
-        <Link href="/councils" className="hover:text-blue-700">Councils</Link><span>/</span>
-        <Link href={`/council/${councilId}`} className="hover:text-blue-700">{councilId}</Link><span>/</span>
-        <span className="text-slate-800">{service.name}</span>
-      </nav>
-      <section className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-        <span className="inline-flex text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-50 text-blue-700">{service.category}</span>
-        <h1 className="text-3xl font-bold text-slate-900 mt-3">{service.name}</h1>
-        <p className="text-slate-500 mt-3 max-w-2xl">{service.description}</p>
-      </section>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-5">
-        <section className="bg-white border border-slate-200 rounded-2xl p-5"><h2 className="font-bold">Resident experience</h2><p className="text-sm text-slate-500 mt-2">Verified ratings and reviews will appear here from Supabase.</p></section>
-        <section className="bg-white border border-slate-200 rounded-2xl p-5"><h2 className="font-bold">Official performance data</h2><p className="text-sm text-slate-500 mt-2">Service-specific government and council metrics remain separately labelled and sourced.</p></section>
-        <section className="bg-white border border-slate-200 rounded-2xl p-5"><h2 className="font-bold">Updates & decisions</h2><p className="text-sm text-slate-500 mt-2">Relevant projects, consultations, meetings and decisions link to their official source.</p></section>
-      </div>
-      <Link href={`/council/${councilId}/review`} className="inline-flex mt-6 px-5 py-3 rounded-xl bg-blue-600 text-white text-sm font-semibold">Review this council →</Link>
-    </main>
-    <Footer />
-  </div>;
+export default function ServiceDetailClient({
+  councilId,
+  slug,
+}: {
+  councilId: string;
+  slug: string;
+}) {
+  const [service, setService] = useState<Service | null>(null);
+  const [councilName, setCouncilName] = useState("");
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [sort, setSort] = useState("newest");
+  const [rating, setRating] = useState("all");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  useEffect(() => {
+    let active = true;
+    async function load() {
+      if (!isSupabaseConfigured)
+        throw new Error("Reviews are temporarily unavailable.");
+      const [c, s] = await Promise.all([
+        supabase
+          .from("councils")
+          .select("id,name")
+          .eq("slug", councilId)
+          .maybeSingle(),
+        supabase
+          .from("services")
+          .select("id,name,description,category")
+          .eq("slug", canonicalService(slug))
+          .maybeSingle(),
+      ]);
+      if (c.error || s.error)
+        throw new Error(
+          "Service information could not be loaded. Please try again.",
+        );
+      if (!c.data || !s.data)
+        throw new Error(
+          "This council or service is not available in the directory.",
+        );
+      const result = await supabase
+        .from("reviews")
+        .select(
+          "id,display_name,is_resident,district,rating,title,body,service_name,created_at,helpful_count",
+        )
+        .eq("council_id", c.data.id)
+        .eq("service_id", s.data.id)
+        .eq("status", "live")
+        .eq("moderation_status", "live")
+        .order("created_at", { ascending: false })
+        .limit(1000);
+      if (result.error)
+        throw new Error("Reviews could not be loaded. Please try again.");
+      if (active) {
+        setCouncilName(c.data.name);
+        setService(s.data);
+        setReviews(result.data || []);
+      }
+    }
+    load()
+      .catch((e) => active && setError(e.message))
+      .finally(() => active && setLoading(false));
+    return () => {
+      active = false;
+    };
+  }, [councilId, slug]);
+  const filtered = reviews
+    .filter((r) => rating === "all" || r.rating === Number(rating))
+    .sort((a, b) =>
+      sort === "highest"
+        ? b.rating - a.rating
+        : sort === "lowest"
+          ? a.rating - b.rating
+          : Date.parse(b.created_at) - Date.parse(a.created_at),
+    );
+  return (
+    <>
+      <Header />
+      <main className="max-w-5xl mx-auto p-4 lg:p-8 space-y-6">
+        <Link href={councilHref(councilId)} className="text-blue-700 underline">
+          ← {councilName || "Back to council"}
+        </Link>
+        {loading && <p role="status">Loading service reviews…</p>}
+        {error && (
+          <p role="alert" className="rounded-xl bg-amber-50 p-5 text-amber-900">
+            {error}
+          </p>
+        )}
+        {service && (
+          <>
+            <section className="bg-white border rounded-2xl p-6">
+              <p className="text-sm text-slate-500">
+                {councilName} · {service.category}
+              </p>
+              <h1 className="text-3xl font-bold mt-2">{service.name}</h1>
+              <p className="mt-3 text-slate-600">
+                {service.description ||
+                  "Read resident experiences of this service. Check the council website to confirm its responsibilities."}
+              </p>
+              <p className="mt-4">
+                {reviews.length
+                  ? `${(reviews.reduce((n, r) => n + r.rating, 0) / reviews.length).toFixed(1)} / 5 · ${reviews.length} published reviews (up to the latest 1,000)`
+                  : "No published reviews yet."}
+              </p>
+              <Link
+                className="inline-block mt-5 rounded-xl bg-blue-600 text-white px-5 py-3"
+                href={reviewHref(councilId, canonicalService(slug))}
+              >
+                Review this service
+              </Link>
+            </section>
+            <div className="flex flex-wrap gap-4">
+              <label>
+                Sort{" "}
+                <select
+                  value={sort}
+                  onChange={(e) => setSort(e.target.value)}
+                  className="border rounded-lg p-2"
+                >
+                  <option value="newest">Newest</option>
+                  <option value="highest">Highest rating</option>
+                  <option value="lowest">Lowest rating</option>
+                </select>
+              </label>
+              <label>
+                Rating{" "}
+                <select
+                  value={rating}
+                  onChange={(e) => setRating(e.target.value)}
+                  className="border rounded-lg p-2"
+                >
+                  <option value="all">All ratings</option>
+                  {[5, 4, 3, 2, 1].map((r) => (
+                    <option key={r} value={r}>
+                      {r} stars
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            {filtered.map((r) => (
+              <ReviewCard key={r.id} review={r} />
+            ))}
+            {!filtered.length && (
+              <p>No published reviews match these filters.</p>
+            )}
+          </>
+        )}
+      </main>
+      <Footer />
+    </>
+  );
 }

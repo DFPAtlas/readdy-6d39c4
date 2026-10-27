@@ -1,5 +1,7 @@
 'use client';
 
+import Icon from './Icon';
+
 import StarRating from './StarRating';
 
 interface Review {
@@ -21,16 +23,16 @@ export default function ReviewCard({ review }: { review: Review }) {
     : 'Resident status unverified';
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-5 hover:shadow-md transition-shadow">
+    <div id={`review-${review.id}`} className="scroll-mt-24 bg-white rounded-xl border border-slate-200 p-5 hover:shadow-md transition-shadow">
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2.5">
           <div className="w-9 h-9 bg-slate-100 rounded-full flex items-center justify-center shrink-0">
-            <i className="ri-user-line text-slate-500" />
+            <Icon className="ri-user-line text-slate-500" />
           </div>
           <div>
             <p className="text-sm font-semibold text-slate-900">{review.display_name}</p>
             <p className={`text-xs flex items-center gap-1 ${review.is_resident ? 'text-emerald-700' : 'text-slate-400'}`}>
-              <i className={`${review.is_resident ? 'ri-check-double-line' : 'ri-information-line'} text-xs`} />
+              <Icon className={`${review.is_resident ? 'ri-check-double-line' : 'ri-information-line'} text-xs`} />
               {badgeText}
             </p>
           </div>
@@ -39,7 +41,7 @@ export default function ReviewCard({ review }: { review: Review }) {
       </div>
 
       <h4 className="text-sm font-semibold text-slate-800 mb-1.5">{review.title}</h4>
-      <p className="text-sm text-slate-600 leading-relaxed mb-3 line-clamp-3">{review.body}</p>
+      <p className="text-sm text-slate-600 leading-relaxed mb-3 whitespace-pre-wrap break-words">{review.body}</p>
 
       <div className="flex items-center justify-between text-xs text-slate-400">
         <div className="flex items-center gap-3">
@@ -56,10 +58,7 @@ export default function ReviewCard({ review }: { review: Review }) {
             })}
           </span>
         </div>
-        <button className="flex items-center gap-1 hover:text-slate-600 transition-colors cursor-pointer">
-          <i className="ri-thumb-up-line" />
-          Helpful ({review.helpful_count})
-        </button>
+        <a className="text-blue-700 underline" href={`/contact?review=${encodeURIComponent(review.id)}`}>Report review</a>
       </div>
     </div>
   );

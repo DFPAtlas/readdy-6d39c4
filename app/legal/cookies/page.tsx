@@ -1,27 +1,3 @@
-'use client';
-
 import Header from '../../../components/lv/Header';
 import Footer from '../../../components/lv/Footer';
-
-export default function CookiesPage() {
-  return (
-    <div className="min-h-screen bg-slate-50">
-      <Header />
-      <main className="px-4 py-8 lg:px-8 max-w-3xl mx-auto">
-        <h1 className="text-2xl font-bold text-slate-900 mb-6">Cookies</h1>
-        <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4 text-sm text-slate-600 leading-relaxed">
-          <p><strong>Essential only.</strong> LocalVerdict uses only essential cookies. We do not use analytics, advertising, or third-party tracking cookies.</p>
-          <p><strong>What we use.</strong></p>
-          <ul className="list-disc list-inside space-y-1 pl-2">
-            <li><strong>lv_session</strong> — Keeps you signed in to your account.</li>
-            <li><strong>lv_cookie_consent</strong> — Records your cookie preference so we do not show the banner again.</li>
-            <li><strong>csrf_token</strong> — Prevents cross-site request forgery attacks on form submissions.</li>
-          </ul>
-          <p><strong>Third parties.</strong> We do not share cookie data with third parties. Our cookie banner is our own code; we do not use consent management platforms.</p>
-          <p><strong>Managing cookies.</strong> You can block all cookies in your browser settings, but you will not be able to sign in or submit reviews.</p>
-        </div>
-      </main>
-      <Footer />
-    </div>
-  );
-}
+export default function CookiesPage(){return <><Header/><main className="max-w-3xl mx-auto p-4 lg:p-8 space-y-5"><h1 className="text-3xl font-bold">Cookies and browser storage</h1><p>The site uses browser storage for sign-in, saving review drafts and remembering that you have dismissed the storage notice. We do not include analytics or advertising scripts.</p><h2 className="text-xl font-bold">What is stored</h2><ul className="list-disc pl-6 space-y-3"><li>Supabase stores authentication tokens in localStorage under a project-specific key so you can stay signed in. Signing out clears the session on this browser.</li><li><code>lv_cookie_consent</code> is a localStorage value recording dismissal of the storage notice.</li><li><code>rylc_review_draft_v1:…</code> stores an unfinished review on this device. Drafts stop being restored 24 hours after the last change. Expired drafts are removed when you next open that council’s review form; successful submission also clears the draft. Avoid entering private information on a shared device.</li></ul><h2 className="text-xl font-bold">External resources</h2><p>Some images load from Readdy. Icons and fonts are bundled with the site. Following an official-source link opens that organisation’s website, where its own storage and privacy rules apply.</p><h2 className="text-xl font-bold">Your controls</h2><p>You can clear site data in your browser settings. This signs you out and removes saved drafts. If browser storage is disabled, draft saving may be unavailable.</p></main><Footer/></>;}

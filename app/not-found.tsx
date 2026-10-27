@@ -1,5 +1,7 @@
 'use client';
 
+import Icon from '../components/lv/Icon';
+
 import Link from 'next/link';
 import Header from '../components/lv/Header';
 import Footer from '../components/lv/Footer';
@@ -10,7 +12,7 @@ export default function NotFound() {
       <Header />
       <main className="flex flex-col items-center justify-center px-4 py-24 text-center">
         <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6">
-          <i className="ri-error-warning-line text-slate-400 text-2xl" />
+          <Icon className="ri-error-warning-line text-slate-400 text-2xl" />
         </div>
         <h1 className="text-4xl font-bold text-slate-900 mb-3">404</h1>
         <p className="text-lg text-slate-500 mb-8">Page not found</p>

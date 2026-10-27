@@ -1,5 +1,7 @@
 'use client';
 
+import Icon from '../lv/Icon';
+
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -61,7 +63,7 @@ export default function SearchBox({
     <form onSubmit={handleSubmit} className={`w-full ${className}`}>
       <div className="flex gap-2">
         <div className="relative flex-1">
-          <i className="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Icon className="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
             value={value}

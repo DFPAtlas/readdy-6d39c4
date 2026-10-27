@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import StarRating from './StarRating';
+import { reviewHref } from '../../lib/navigation';
 
 interface CouncilHeroProps {
   council: {
@@ -12,6 +13,7 @@ interface CouncilHeroProps {
     region: string;
     overall_rating: number;
     review_count: number;
+    ratings_available?: boolean;
   };
 }
 
@@ -34,14 +36,14 @@ export default function CouncilHero({ council }: CouncilHeroProps) {
       case 'unitary': return 'Unitary Authority';
       case 'metropolitan': return 'Metropolitan District';
       case 'london_borough': return 'London Borough';
-      default: return type;
+      default: return 'Council';
     }
   };
 
   return (
     <div className="bg-white border-b border-slate-200">
       <div className="px-4 py-6 lg:px-8">
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:justify-between gap-4">
           <div className="min-w-0">
             <div className="flex items-center gap-2 mb-2 flex-wrap">
               <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${getTypeColour(council.council_type)}`}>
@@ -52,18 +54,18 @@ export default function CouncilHero({ council }: CouncilHeroProps) {
             <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-3">{council.name}</h1>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <span className="text-2xl font-bold text-slate-900">
-                  {council.overall_rating.toFixed(1)}
+                <span className="text-xl sm:text-2xl font-bold text-slate-900">
+                  {council.ratings_available === false ? 'Reviews unavailable' : council.review_count ? council.overall_rating.toFixed(1) : 'No rating yet'}
                 </span>
-                <StarRating rating={Math.round(council.overall_rating)} />
+                {council.ratings_available !== false && <StarRating rating={Math.round(council.overall_rating)} />}
               </div>
               <span className="text-sm text-slate-500">
-                {council.review_count.toLocaleString()} reviews
+                {council.ratings_available === false ? '' : `${council.review_count.toLocaleString()} reviews`}
               </span>
             </div>
           </div>
           <Link
-            href={`/council/${council.slug}/review`}
+            href={reviewHref(council.slug)}
             className="shrink-0 bg-[#0B5FFF] text-white px-5 py-3 rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors whitespace-nowrap cursor-pointer"
           >
             Write a review

@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 
-const POSTCODE_REGEX = /^[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}$/i;
+import { validPostcode } from '../../lib/navigation';
 
 interface PostcodeSearchProps {
   variant?: 'hero' | 'compact';
@@ -20,7 +20,7 @@ export default function PostcodeSearch({ variant = 'hero' }: PostcodeSearchProps
   };
 
   const validate = (value: string) => {
-    return POSTCODE_REGEX.test(value.trim());
+    return validPostcode(value);
   };
 
   const handleSubmit = useCallback(
@@ -104,7 +104,7 @@ export default function PostcodeSearch({ variant = 'hero' }: PostcodeSearchProps
           }}
           placeholder="Postcode"
           maxLength={10}
-          className="flex-1 px-4 py-2.5 text-sm rounded-lg border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0B5FFF] transition-colors"
+          className="min-w-0 flex-1 px-4 py-2.5 text-sm rounded-lg border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0B5FFF] transition-colors"
           aria-label="Enter your postcode"
         />
         <button

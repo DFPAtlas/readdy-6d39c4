@@ -1,5 +1,7 @@
 'use client';
 
+import Icon from '../../components/lv/Icon';
+
 import Link from 'next/link';
 import Header from '../../components/lv/Header';
 import Footer from '../../components/lv/Footer';
@@ -13,10 +15,10 @@ export default function AboutPage() {
         {/* Hero */}
         <section className="bg-slate-900 text-white px-4 py-16 lg:px-8">
           <div className="max-w-3xl">
-            <h1 className="text-3xl lg:text-4xl font-bold mb-4">About LocalVerdict</h1>
+            <h1 className="text-3xl lg:text-4xl font-bold mb-4">About Rate Your Local Council</h1>
             <p className="text-lg text-slate-300 leading-relaxed">
               We believe local government should be transparent, accountable, and responsive to the people it serves.
-              LocalVerdict is an independent platform where residents can share honest reviews of their council&apos;s services.
+              Rate Your Local Council is an independent platform where residents can share honest reviews of their council&apos;s services.
             </p>
           </div>
         </section>
@@ -28,8 +30,8 @@ export default function AboutPage() {
               {[
                 {
                   icon: 'ri-shield-check-line',
-                  title: 'Verified reviews',
-                  desc: 'Every reviewer confirms they live in the area. No fake reviews, no manipulation.',
+                  title: 'Clear review status',
+                  desc: 'Reviews require a confirmed email account. Resident verification is separate; unverified status is shown clearly.',
                 },
                 {
                   icon: 'ri-community-line',
@@ -39,12 +41,12 @@ export default function AboutPage() {
                 {
                   icon: 'ri-bar-chart-line',
                   title: 'Data you can trust',
-                  desc: 'All ratings are publicly visible. Councils cannot hide or suppress feedback.',
+                  desc: 'Published reviews contribute to resident ratings. Moderation may withhold or remove content under our guidelines.',
                 },
               ].map((item) => (
                 <div key={item.title} className="text-center">
                   <div className="w-12 h-12 bg-[#0B5FFF]/10 rounded-xl flex items-center justify-center mx-auto mb-4">
-                    <i className={`${item.icon} text-[#0B5FFF] text-xl`} />
+                    <Icon className={`${item.icon} text-[#0B5FFF] text-xl`} />
                   </div>
                   <h3 className="text-lg font-bold text-slate-900 mb-2">{item.title}</h3>
                   <p className="text-sm text-slate-500">{item.desc}</p>
@@ -58,7 +60,7 @@ export default function AboutPage() {
         <section className="px-4 py-14 lg:px-8 bg-slate-50">
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-10">
-              <h2 className="text-xl lg:text-2xl font-bold text-slate-900 mb-2">How LocalVerdict works</h2>
+              <h2 className="text-xl lg:text-2xl font-bold text-slate-900 mb-2">How Rate Your Local Council works</h2>
               <p className="text-slate-500">Simple, transparent, and built for residents</p>
             </div>
             <div className="space-y-8">
@@ -66,12 +68,12 @@ export default function AboutPage() {
                 {
                   step: '01',
                   title: 'Find your council',
-                  desc: 'Enter your postcode and we show you every local authority that serves your area — county, district, or unitary.',
+                  desc: 'Use the government postcode lookup to identify your council, then find the authority in our directory.',
                 },
                 {
                   step: '02',
                   title: 'Rate your experience',
-                  desc: 'Give an overall star rating and optionally rate specific services like housing, waste, or education.',
+                  desc: 'Give an overall star rating and optionally select the service you used.',
                 },
                 {
                   step: '03',
@@ -81,7 +83,7 @@ export default function AboutPage() {
                 {
                   step: '04',
                   title: 'See the bigger picture',
-                  desc: 'Browse reviews from other residents, compare council performance, and hold your authority to account.',
+                  desc: 'Browse published resident experiences. These ratings reflect opinion, not official council performance.',
                 },
               ].map((item) => (
                 <div key={item.step} className="flex gap-5">
@@ -94,25 +96,6 @@ export default function AboutPage() {
                     <h3 className="text-lg font-bold text-slate-900 mb-1">{item.title}</h3>
                     <p className="text-sm text-slate-500">{item.desc}</p>
                   </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Stats */}
-        <section className="px-4 py-14 lg:px-8 bg-white">
-          <div className="max-w-4xl mx-auto">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-              {[
-                { value: '382', label: 'UK councils covered' },
-                { value: '48,000+', label: 'Verified reviews' },
-                { value: '156', label: 'Service categories' },
-                { value: '2024', label: 'Founded' },
-              ].map((stat) => (
-                <div key={stat.label} className="text-center">
-                  <div className="text-3xl font-bold text-slate-900 mb-1">{stat.value}</div>
-                  <div className="text-sm text-slate-500">{stat.label}</div>
                 </div>
               ))}
             </div>

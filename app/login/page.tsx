@@ -4,13 +4,14 @@ import { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '../../lib/supabase';
+import { safeNext } from '../../lib/navigation';
 import Header from '../../components/lv/Header';
 import Footer from '../../components/lv/Footer';
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get('next') || '/';
+  const next = safeNext(searchParams.get('next'));
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -140,6 +141,7 @@ function LoginForm() {
         </button>
       </form>
 
+      <Link href="/reset-password" className="block mt-4 text-sm text-blue-700 underline">Forgot your password?</Link>
       <div className="mt-6 pt-6 border-t border-slate-100 text-center">
         <p className="text-sm text-slate-500">
           Don&apos;t have an account?{' '}

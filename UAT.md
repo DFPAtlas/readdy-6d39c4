@@ -1,81 +1,28 @@
-# Rate Your Local Council — UAT Handoff
+# Rate Your Local Council — launch repair checks
 
-## Scope of this build
+## Completed automated checks
 
-This GitHub build is the production-shaped concept handoff for Readdy. It establishes the information architecture and visual system before live Supabase/API integrations are connected.
+See the PR for results at its current commit. Coverage includes safe same-site redirects, query routes for councils outside the old static list, legacy service aliases, draft validation/expiry, lint, TypeScript and production export.
 
-### Core routes to test
+## Browser checks before publication
 
-1. `/` — rebuilt product homepage
-2. `/council/hertfordshire` — full civic intelligence dashboard concept
-3. `/councils` — existing council directory
-4. `/council/westminster` — existing council/review flow for regression testing
-5. `/login` and `/account` — existing account concept flows
-6. `/legal/*` — existing policy pages
+- [ ] At 390px, 768px and 1366px there is no horizontal page overflow; cookie/storage notice does not hide controls after dismissal.
+- [ ] Keyboard navigation reaches menus, links and form controls with visible focus.
+- [ ] Any council record in the directory opens via `/council-view?council=…`, including Barnet (outside the original static list).
+- [ ] Service directory → choose council → service reviews → write review retains the selected service.
+- [ ] Old `/service/westminster/planning/reviews` loads the shared service page instead of a hardcoded not-found screen.
+- [ ] Unknown council/service and failed requests show useful error states.
+- [ ] Postcode page provides explicit GOV.UK guidance and never fabricates matches or review counts.
+- [ ] Every Hertfordshire guide anchor reaches a real section; source links resolve.
+- [ ] Signed-out review draft survives login, signup/confirmation and refresh; expired/corrupt drafts are not restored.
+- [ ] Submit with a confirmed email → pending moderation → appears in the author's account → not publicly visible until approval.
+- [ ] Another user cannot read/delete pending reviews belonging to the author.
+- [ ] Delete own review removes exactly that review and reports failure honestly.
+- [ ] Account profile saves; sign out works; request account deletion explains the manual process and does not claim deletion.
+- [ ] Password reset email returns to `/reset-password`, changes the password and permits a fresh sign-in; expired links are handled.
+- [ ] Report review opens monitored contact details; verify delivery and handling with the final support mailbox.
+- [ ] Check final privacy/terms with the actual operator, domain, providers and operational procedures.
 
-## Data labelling rules
+## Known outstanding work
 
-- **Resident opinion** must never be presented as official council performance data.
-- **Official data** must display a source and, once live, a snapshot/update date.
-- **Context data** such as crime or rail information must state when the responsible body is not the council.
-- Political parties, councillors, candidates and mayors are not platform-ranked or scored. Representation pages should show factual sourced records only.
-- Demo/placeholder resident ratings must remain labelled as concept data until Supabase review data is live.
-
-## Hertfordshire verified concept facts
-
-- ONS 2024 population: 1,236,191.
-- ONS 2024 median age: 40.
-- Current lower-tier structure: 10 district/borough councils.
-- Hertfordshire has 124 parish/town councils.
-- HCC states it spends more than £1.2bn a year delivering 500+ services.
-- HCC's 2026/27 county council tax element increased by 4.99% (2% adult social care precept + 2.99% general council tax).
-- Government announced on 16 July 2026 that Hertfordshire will move to four unitary councils, subject to Parliamentary approval.
-- Shadow-authority elections are expected in May 2027 and vesting is planned for 1 April 2028.
-
-## UAT checklist
-
-### Visual / responsive
-- [ ] Homepage renders at 1920×1080 with no horizontal overflow.
-- [ ] Homepage remains usable at 1366×768.
-- [ ] Mobile layout works at 390px width.
-- [ ] Hertfordshire dashboard cards stack cleanly on tablet and mobile.
-- [ ] Sticky global header does not obscure content.
-- [ ] Dashboard sidebar remains usable and does not overlap content.
-
-### Navigation
-- [ ] Logo returns to `/`.
-- [ ] `Explore Hertfordshire dashboard` opens `/council/hertfordshire`.
-- [ ] Header Data link opens the Hertfordshire dashboard.
-- [ ] Councils, About, Help, Login and review links resolve.
-- [ ] External official-source links open in a new tab.
-
-### Content integrity
-- [ ] Resident rating is visibly labelled as resident opinion / concept score.
-- [ ] Official data cards are visibly labelled official data.
-- [ ] Crime section explicitly says it is not a council performance score.
-- [ ] Politics & Representation section contains no platform-generated political rating.
-- [ ] Reorganisation timeline states that implementation is subject to Parliamentary approval.
-
-### Accessibility
-- [ ] Keyboard navigation reaches primary nav, CTAs and dashboard source links.
-- [ ] Focus states are visible.
-- [ ] Text contrast is readable on hero imagery.
-- [ ] Heading order remains logical.
-- [ ] Interactive controls have usable text/ARIA labels.
-
-### Regression
-- [ ] Existing `/councils` page still renders.
-- [ ] Existing dynamic council pages still render.
-- [ ] Existing review form still renders.
-- [ ] Existing legal pages still render.
-
-## Next production phase after Readdy pull
-
-1. Apply final visual polish in Readdy.
-2. Create the canonical council/authority data model using official authority codes.
-3. Connect postcode-to-authority lookup.
-4. Connect Supabase auth, reviews, verification and moderation.
-5. Add scheduled public-data ingestion with source timestamps and caching.
-6. Build council / county / district / parish relationships.
-7. Add meetings, consultations, projects and spending feeds.
-8. Run full UAT again against live integrations before launch.
+Automatic postcode lookup, residency verification UI, moderation operations, automatic account closure/retention, direct review editing and official data feeds are not delivered by this batch. Contact mailbox, final domain, mail delivery and production auth redirects need verification before launch.

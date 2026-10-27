@@ -4,12 +4,13 @@ import { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { supabase } from '../../lib/supabase';
+import { safeNext, validPostcode } from '../../lib/navigation';
 import Header from '../../components/lv/Header';
 import Footer from '../../components/lv/Footer';
 
 function SignupForm() {
   const searchParams = useSearchParams();
-  const next = searchParams.get('next') || '/';
+  const next = safeNext(searchParams.get('next'));
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -23,6 +24,7 @@ function SignupForm() {
     e.preventDefault();
     setError('');
     setMessage('');
+    if (!validPostcode(postcode)) { setError('Enter a valid UK postcode.'); return; }
     setLoading(true);
 
     const { error: signUpError } = await supabase.auth.signUp({
@@ -107,7 +109,7 @@ function SignupForm() {
             className="w-full px-3 py-2.5 text-sm rounded-lg border border-slate-200 focus:outline-none focus:border-[#0B5FFF] transition-colors"
             placeholder="e.g. SW1A 1AA"
           />
-          <p className="text-xs text-slate-400 mt-1">Used to verify your local council.</p>
+          <p className="text-xs text-slate-400 mt-1">Saved to your profile. Entering a postcode does not verify residency.</p>
         </div>
 
         <div>
@@ -126,6 +128,7 @@ function SignupForm() {
           />
         </div>
 
+        <p className="text-xs text-slate-600">By creating an account, you agree to our <Link href="/legal/terms" className="text-blue-700 underline">terms</Link>. Read our <Link href="/legal/privacy" className="text-blue-700 underline">privacy policy</Link>.</p>
         <button
           type="submit"
           disabled={loading}

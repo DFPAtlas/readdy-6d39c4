@@ -1,7 +1,11 @@
 'use client';
 
+import Icon from '../../components/lv/Icon';
+
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { councilHref, serviceHref } from '../../lib/navigation';
+import { Suspense, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Header from '../../components/lv/Header';
 import Footer from '../../components/lv/Footer';
 import PostcodeSearch from '../../components/lv/PostcodeSearch';
@@ -39,11 +43,14 @@ function formatCouncilType(type: string) {
     .replace(/_/g, ' ');
 }
 
-export default function CouncilsPage() {
+function CouncilsContent() {
+  const selectedService = useSearchParams().get('service') || '';
   const [search, setSearch] = useState('');
   const [region, setRegion] = useState('all');
+  const [loadError, setLoadError] = useState('');
+  const [summariesAvailable, setSummariesAvailable] = useState(false);
   const [councils, setCouncils] = useState<CouncilListItem[]>(fallbackCouncils);
-  const [dataMode, setDataMode] = useState<'live' | 'fallback'>(isSupabaseConfigured ? 'live' : 'fallback');
+  const [dataMode, setDataMode] = useState<'live' | 'fallback'>('fallback');
 
   useEffect(() => {
     if (!isSupabaseConfigured) return;
@@ -54,15 +61,18 @@ export default function CouncilsPage() {
         .select('slug,name,council_type,region')
         .order('name');
 
-      const { data: summaryRows } = await supabase
+      const { data: summaryRows, error: summaryError } = await supabase
         .from('council_review_summary')
         .select('slug,review_count,average_rating');
 
       if (councilError || !councilRows) {
         setDataMode('fallback');
+        setLoadError('The full directory could not be loaded. A limited selection of authorities is shown.');
         return;
       }
 
+      setSummariesAvailable(!summaryError);
+      if (summaryError) setLoadError('Council records loaded, but review totals are temporarily unavailable.');
       const summaryBySlug = new Map(
         (summaryRows || []).map((row: any) => [row.slug, row])
       );
@@ -83,7 +93,7 @@ export default function CouncilsPage() {
       setDataMode('live');
     };
 
-    load();
+    load().catch(() => { setDataMode('fallback'); setLoadError('The full directory could not be loaded. A limited selection of authorities is shown.'); });
   }, []);
 
   const regions = useMemo(
@@ -103,31 +113,32 @@ export default function CouncilsPage() {
         <div className="flex items-center gap-2">
           <span className="text-xs font-bold uppercase tracking-wider text-blue-700">Council directory</span>
           <span className={`text-[10px] font-bold rounded-full px-2 py-1 ${dataMode === 'live' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
-            {dataMode === 'live' ? 'LIVE SUPABASE' : 'FALLBACK DATA'}
+            {dataMode === 'live' ? 'Reviews available' : 'Sample directory'}
           </span>
         </div>
         <h1 className="text-3xl font-bold text-slate-900 mt-2">Find a council or local area</h1>
-        <p className="text-slate-500 mt-2">Browse authority records and resident review summaries from the live council data layer.</p>
+        <p className="text-slate-500 mt-2">Find an authority and read published resident reviews. Coverage is being expanded.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_220px_1fr] gap-3 bg-white border border-slate-200 rounded-2xl p-4 mb-7 shadow-sm">
-        <div className="relative"><i className="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search councils..." className="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl border border-slate-200 focus:outline-none focus:border-blue-500"/></div>
+        <div className="relative"><Icon className="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search councils..." className="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl border border-slate-200 focus:outline-none focus:border-blue-500"/></div>
         <select value={region} onChange={e=>setRegion(e.target.value)} className="w-full px-3 py-2.5 text-sm rounded-xl border border-slate-200 bg-white"><option value="all">All regions</option>{regions.map(r=><option key={r}>{r}</option>)}</select>
         <PostcodeSearch variant="compact" />
       </div>
 
+      {loadError && <p role="alert" className="mb-5 rounded-xl bg-amber-50 p-4 text-amber-900">{loadError}</p>}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filtered.map(c => {
           const featured = c.slug === 'hertfordshire';
-          return <Link key={c.slug} href={`/council/${c.slug}`} className={`group bg-white border rounded-2xl p-5 transition-all hover:-translate-y-0.5 hover:shadow-lg ${featured?'border-blue-300 ring-2 ring-blue-50':'border-slate-200 hover:border-blue-200'}`}>
+          return <Link key={c.slug} href={selectedService ? serviceHref(c.slug, selectedService) : councilHref(c.slug)} className={`group bg-white border rounded-2xl p-5 transition-all hover:-translate-y-0.5 hover:shadow-lg ${featured?'border-blue-300 ring-2 ring-blue-50':'border-slate-200 hover:border-blue-200'}`}>
             <div className="flex items-start justify-between gap-3">
               <div><span className="text-xs text-slate-400">{c.region || 'Region not set'}</span><h2 className="font-bold text-slate-900 mt-1 group-hover:text-blue-700">{c.name}</h2></div>
-              {featured && <span className="text-[10px] font-bold rounded-full bg-blue-50 text-blue-700 px-2 py-1">FULL DASHBOARD</span>}
+              {featured && <span className="text-[10px] font-bold rounded-full bg-blue-50 text-blue-700 px-2 py-1">FEATURED</span>}
             </div>
             <div className="mt-5 flex items-center justify-between"><span className="text-xs font-medium text-slate-500">{formatCouncilType(c.council_type)}</span><span className="text-sm font-semibold text-blue-700">Explore →</span></div>
             <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-              <span className="text-slate-500">{c.review_count ?? 0} live reviews</span>
-              <span className="font-semibold text-slate-700">{c.average_rating == null ? 'No rating yet' : `${c.average_rating.toFixed(2)} / 5`}</span>
+              <span className="text-slate-500">{dataMode === 'live' && summariesAvailable ? `${c.review_count ?? 0} published reviews` : 'Review totals unavailable'}</span>
+              <span className="font-semibold text-slate-700">{dataMode === 'live' && summariesAvailable ? (c.average_rating == null ? 'No rating yet' : `${c.average_rating.toFixed(2)} / 5`) : '—'}</span>
             </div>
           </Link>;
         })}
@@ -138,3 +149,5 @@ export default function CouncilsPage() {
     <Footer />
   </div>;
 }
+
+export default function CouncilsPage() { return <Suspense fallback={<p className="p-8">Loading directory…</p>}><CouncilsContent/></Suspense>; }
